@@ -1,0 +1,59 @@
+{
+  "name": "@agentspaces/electron",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AgentSpaces Electron desktop shell",
+  "author": "Codex",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "wait-on tcp:5173 && cross-env ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron-vite dev",
+    "build": "electron-vite build",
+    "package": "pnpm run build && electron-builder",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run --config ../../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "build": {
+    "appId": "com.agentspaces.app",
+    "productName": "AgentSpaces",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-win-${arch}-installer.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-win-${arch}-portable.${ext}"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "dist/main/main.js"
+    }
+  },
+  "dependencies": {
+    "electron-store": "11.0.2",
+    "node-pty": "1.1.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "electron": "40.8.0",
+    "electron-builder": "26.8.1",
+    "electron-vite": "5.0.0"
+  }
+}
