@@ -1,10 +1,12 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { app, BrowserWindow, Menu, ipcMain, type MenuItemConstructorOptions } from 'electron';
 import {
   ipcChannels,
   type PaneCwdInput,
   type PaneRenameInput,
   type PaneShellInput,
+  type PaneStageAssetInput,
   type WorkspaceCreateInput,
   type WorkspaceLayoutInput
 } from '@agentspaces/shared';
@@ -14,6 +16,42 @@ import { WorkspaceManager } from './workspace-manager';
 
 let mainWindow: BrowserWindow | null = null;
 let workspaceManager: WorkspaceManager | null = null;
+
+function resolveLaunchFolder(): string | undefined {
+  const launchFlagIndex = process.argv.findIndex((argument) => argument === '--launch-folder');
+  if (launchFlagIndex >= 0) {
+    const candidate = process.argv[launchFlagIndex + 1];
+    if (candidate && isDirectory(candidate)) {
+      return candidate;
+    }
+  }
+
+  const passthroughIndex = process.argv.findIndex((argument) => argument === '--');
+  if (passthroughIndex >= 0) {
+    const candidate = process.argv[passthroughIndex + 1];
+    if (candidate && isDirectory(candidate)) {
+      return candidate;
+    }
+  }
+
+  if (!app.isPackaged) {
+    return undefined;
+  }
+
+  return process.argv.find((argument, index) => index > 0 && isDirectory(argument));
+}
+
+function isDirectory(candidate: string): boolean {
+  if (!candidate || candidate.startsWith('-') || candidate.endsWith('.js') || candidate.toLowerCase().includes('electron')) {
+    return false;
+  }
+
+  try {
+    return fs.existsSync(candidate) && fs.statSync(candidate).isDirectory();
+  } catch {
+    return false;
+  }
+}
 
 async function createMainWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
@@ -25,11 +63,13 @@ async function createMainWindow(): Promise<void> {
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      backgroundThrottling: false,
+      spellcheck: false
     }
   });
 
-  const launchFolder = process.argv.find((argument, index) => index > 0 && !argument.endsWith('.js') && !argument.toLowerCase().includes('electron'));
+  const launchFolder = resolveLaunchFolder();
   workspaceManager = new WorkspaceManager(mainWindow, new PersistenceService(), launchFolder);
   registerIpc(workspaceManager);
   buildMenu();
@@ -48,6 +88,7 @@ function registerIpc(manager: WorkspaceManager): void {
   ipcMain.handle(ipcChannels.paneRename, (_event, input: PaneRenameInput) => manager.renamePane(input));
   ipcMain.handle(ipcChannels.paneSetShell, (_event, input: PaneShellInput) => manager.setPaneShell(input));
   ipcMain.handle(ipcChannels.paneSetCwd, (_event, input: PaneCwdInput) => manager.setPaneCwd(input));
+  ipcMain.handle(ipcChannels.paneStageAsset, (_event, input: PaneStageAssetInput) => manager.stagePaneAsset(input));
   ipcMain.handle(ipcChannels.paneClose, (_event, paneId: string) => manager.closePane(paneId));
   ipcMain.handle(ipcChannels.paneToggleMaximize, (_event, paneId: string) => manager.togglePaneMaximize(paneId));
   ipcMain.handle(ipcChannels.ptyRestart, (_event, paneId: string) => manager.restartPane(paneId));

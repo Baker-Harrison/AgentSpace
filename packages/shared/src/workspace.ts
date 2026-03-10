@@ -1,5 +1,6 @@
 import { buildGridPositions, getLayoutPreset } from './layouts';
 import { createId } from './id';
+import type { WorkspacePaneBlueprintInput } from './ipc';
 import type { PersistedState, TerminalPane, Workspace } from './types';
 
 export function createEmptyState(): PersistedState {
@@ -16,20 +17,38 @@ export function deriveWorkspaceName(projectRootPath: string): string {
   return parts.at(-1) ?? projectRootPath;
 }
 
-export function createWorkspace(projectRootPath: string, layoutId: string): { workspace: Workspace; panes: Record<string, TerminalPane> } {
+function createDefaultPaneBlueprints(projectRootPath: string, layoutId: string): WorkspacePaneBlueprintInput[] {
+  const layout = getLayoutPreset(layoutId);
+  const workspaceName = deriveWorkspaceName(projectRootPath);
+  return buildGridPositions(layoutId).slice(0, layout.maxPanes).map((_position, index) => ({
+    agentProfile: 'shell',
+    title: index === 0 ? projectRootPath : `${workspaceName} ${index + 1}`,
+    launchCommand: null
+  }));
+}
+
+export function createWorkspace(
+  projectRootPath: string,
+  layoutId: string,
+  paneBlueprints?: WorkspacePaneBlueprintInput[]
+): { workspace: Workspace; panes: Record<string, TerminalPane> } {
   const now = new Date().toISOString();
   const workspaceId = createId('ws');
   const layout = getLayoutPreset(layoutId);
   const paneIds: string[] = [];
   const panes: Record<string, TerminalPane> = {};
+  const requestedBlueprints = (paneBlueprints?.length ? paneBlueprints : createDefaultPaneBlueprints(projectRootPath, layoutId)).slice(0, layout.maxPanes);
 
-  buildGridPositions(layoutId).slice(0, layout.maxPanes).forEach((position, index) => {
+  buildGridPositions(layoutId).slice(0, requestedBlueprints.length).forEach((position, index) => {
+    const blueprint = requestedBlueprints[index];
     const paneId = createId('pane');
     paneIds.push(paneId);
     panes[paneId] = {
       id: paneId,
       workspaceId,
-      title: index === 0 ? projectRootPath : `${deriveWorkspaceName(projectRootPath)} ${index + 1}`,
+      title: blueprint.title,
+      agentProfile: blueprint.agentProfile,
+      launchCommand: blueprint.launchCommand,
       shellPath: '',
       shellKey: '',
       cwd: projectRootPath,

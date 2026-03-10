@@ -6,6 +6,8 @@ import type {
   PaneCwdInput,
   PaneRenameInput,
   PaneShellInput,
+  PaneStageAssetInput,
+  PaneStageAssetResult,
   PtyDataEvent,
   PtyExitEvent,
   WorkspaceCreateInput,
@@ -26,6 +28,7 @@ declare global {
       renamePane: (input: PaneRenameInput) => Promise<void>;
       setPaneShell: (input: PaneShellInput) => Promise<void>;
       setPaneCwd: (input: PaneCwdInput) => Promise<void>;
+      stagePaneAsset: (input: PaneStageAssetInput) => Promise<PaneStageAssetResult>;
       closePane: (paneId: string) => Promise<void>;
       togglePaneMaximize: (paneId: string) => Promise<void>;
       ptyInput: (paneId: string, data: string) => void;

@@ -25,6 +25,9 @@ export type CommandBlockStatus = z.infer<typeof commandBlockStatusSchema>;
 export const terminalPaneStatusSchema = z.enum(['starting', 'active', 'inactive', 'exited']);
 export type TerminalPaneStatus = z.infer<typeof terminalPaneStatusSchema>;
 
+export const agentProfileSchema = z.enum(['shell', 'codex', 'claude']);
+export type AgentProfile = z.infer<typeof agentProfileSchema>;
+
 export const commandBlockSchema = z.object({
   id: z.string(),
   paneId: z.string(),
@@ -45,6 +48,8 @@ export const terminalPaneSchema = z.object({
   id: z.string(),
   workspaceId: z.string(),
   title: z.string(),
+  agentProfile: agentProfileSchema,
+  launchCommand: z.string().nullable().default(null),
   shellPath: z.string(),
   shellKey: z.string(),
   cwd: z.string(),

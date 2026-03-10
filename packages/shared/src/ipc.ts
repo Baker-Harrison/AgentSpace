@@ -1,4 +1,4 @@
-import type { CommandBlock, LayoutPreset, PersistedState, TerminalPane, Workspace } from './types';
+import type { AgentProfile, CommandBlock, LayoutPreset, PersistedState, TerminalPane, Workspace } from './types';
 
 export type ShellOption = {
   key: string;
@@ -15,6 +15,13 @@ export type BootstrapPayload = {
 export type WorkspaceCreateInput = {
   projectRootPath: string;
   layoutId: string;
+  paneBlueprints?: WorkspacePaneBlueprintInput[];
+};
+
+export type WorkspacePaneBlueprintInput = {
+  agentProfile: AgentProfile;
+  title: string;
+  launchCommand: string | null;
 };
 
 export type PaneRenameInput = {
@@ -30,6 +37,19 @@ export type PaneShellInput = {
 export type PaneCwdInput = {
   paneId: string;
   cwd: string;
+};
+
+export type PaneStageAssetInput = {
+  paneId: string;
+  fileName: string;
+  mimeType: string;
+  base64Data: string;
+};
+
+export type PaneStageAssetResult = {
+  path: string;
+  mimeType: string;
+  size: number;
 };
 
 export type WorkspaceLayoutInput = {
@@ -70,6 +90,7 @@ export const ipcChannels = {
   paneRename: 'pane:rename',
   paneSetShell: 'pane:setShell',
   paneSetCwd: 'pane:setCwd',
+  paneStageAsset: 'pane:stageAsset',
   paneClose: 'pane:close',
   paneToggleMaximize: 'pane:toggleMaximize',
   ptyInput: 'pty:input',

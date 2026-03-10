@@ -58,6 +58,7 @@ beforeEach(() => {
     renamePane: vi.fn(),
     setPaneShell: vi.fn(),
     setPaneCwd: vi.fn(),
+    stagePaneAsset: vi.fn(),
     closePane: vi.fn(),
     togglePaneMaximize: vi.fn(),
     ptyInput: vi.fn(),
@@ -76,7 +77,7 @@ describe('App', () => {
   it('renders the shell once bootstrap resolves', async () => {
     render(<App />);
     expect(await screen.findByText('Terminal workspace')).toBeTruthy();
-    expect(await screen.findByRole('button', { name: 'Open folder' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'New workspace' })).toBeTruthy();
     expect(await screen.findByText('project')).toBeTruthy();
   });
 

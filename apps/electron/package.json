@@ -1,12 +1,12 @@
 {
   "name": "@agentspaces/electron",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "AgentSpaces Electron desktop shell",
   "author": "Codex",
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "wait-on tcp:5173 && cross-env ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron-vite dev",
+    "dev": "electron-vite dev",
     "build": "electron-vite build",
     "package": "pnpm run build && electron-builder",
     "lint": "eslint \"src/**/*.ts\"",

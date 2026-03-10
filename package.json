@@ -1,6 +1,6 @@
 {
   "name": "agentspaces",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "AgentSpaces desktop terminal workspace",
   "packageManager": "pnpm@10.29.2",
@@ -9,7 +9,8 @@
     "agentspaces": "./bin/agentspaces.js"
   },
   "scripts": {
-    "dev": "concurrently -k \"pnpm --filter @agentspaces/renderer dev\" \"pnpm --filter @agentspaces/electron dev\"",
+    "dev": "pnpm --filter @agentspaces/electron dev",
+    "dev:renderer": "pnpm --filter @agentspaces/renderer dev",
     "build": "pnpm --filter @agentspaces/shared build && pnpm --filter @agentspaces/renderer build && pnpm --filter @agentspaces/electron build",
     "lint": "pnpm --filter @agentspaces/shared lint && pnpm --filter @agentspaces/renderer lint && pnpm --filter @agentspaces/electron lint",
     "test": "pnpm --filter @agentspaces/shared test && pnpm --filter @agentspaces/renderer test && pnpm --filter @agentspaces/electron test",

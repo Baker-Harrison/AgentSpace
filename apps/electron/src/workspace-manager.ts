@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { BrowserWindow, dialog } from 'electron';
 import { spawn, type IPty } from 'node-pty';
 import {
@@ -15,6 +16,8 @@ import {
   type PaneCwdInput,
   type PaneRenameInput,
   type PaneShellInput,
+  type PaneStageAssetInput,
+  type PaneStageAssetResult,
   type PersistedState,
   type ShellOption,
   type TerminalPane,
@@ -30,6 +33,7 @@ type PaneRuntime = {
   parser: CommandBlockParser;
   activeBlockId: string | null;
   flushTimer: NodeJS.Timeout | null;
+  launchTimer: NodeJS.Timeout | null;
   alternateScreen: boolean;
 };
 
@@ -72,7 +76,7 @@ export class WorkspaceManager {
   }
 
   createWorkspace(input: WorkspaceCreateInput): Workspace {
-    const created = createWorkspace(input.projectRootPath, input.layoutId);
+    const created = createWorkspace(input.projectRootPath, input.layoutId, input.paneBlueprints);
     const workspace = created.workspace;
 
     this.state.workspaces = [...this.state.workspaces, workspace];
@@ -189,6 +193,27 @@ export class WorkspaceManager {
     this.restartPane(input.paneId);
   }
 
+  async stagePaneAsset(input: PaneStageAssetInput): Promise<PaneStageAssetResult> {
+    const pane = this.state.panes[input.paneId];
+    if (!pane) {
+      throw new Error(`Pane ${input.paneId} was not found.`);
+    }
+
+    const assetsDirectory = path.join(pane.cwd, '.agentspaces', 'attachments');
+    await mkdir(assetsDirectory, { recursive: true });
+
+    const fileName = this.buildAssetFileName(input.fileName, input.mimeType);
+    const filePath = path.join(assetsDirectory, fileName);
+    const buffer = Buffer.from(input.base64Data, 'base64');
+    await writeFile(filePath, buffer);
+
+    return {
+      path: filePath,
+      mimeType: input.mimeType,
+      size: buffer.byteLength
+    };
+  }
+
   closePane(paneId: string): void {
     const pane = this.state.panes[paneId];
     if (!pane) {
@@ -280,6 +305,8 @@ export class WorkspaceManager {
       id: createId('pane'),
       workspaceId: workspace.id,
       title: `${workspace.name} ${index + 1}`,
+      agentProfile: 'shell',
+      launchCommand: null,
       shellPath: '',
       shellKey: '',
       cwd: workspace.projectRootPath,
@@ -318,7 +345,16 @@ export class WorkspaceManager {
       }
     });
     const parser = new CommandBlockParser();
-    this.panes.set(paneId, { pty, parser, activeBlockId: null, flushTimer: null, alternateScreen: false });
+    const launchTimer =
+      pane.launchCommand && pane.launchCommand.trim()
+        ? setTimeout(() => {
+            const runtime = this.panes.get(paneId);
+            if (runtime?.pty === pty) {
+              pty.write(`${pane.launchCommand}\r`);
+            }
+          }, 140)
+        : null;
+    this.panes.set(paneId, { pty, parser, activeBlockId: null, flushTimer: null, launchTimer, alternateScreen: false });
 
     pty.onData((data) => this.handlePtyOutput(paneId, pane.ptyId!, data));
     pty.onExit(({ exitCode }) => {
@@ -472,6 +508,9 @@ export class WorkspaceManager {
     if (runtime.flushTimer) {
       clearTimeout(runtime.flushTimer);
     }
+    if (runtime.launchTimer) {
+      clearTimeout(runtime.launchTimer);
+    }
     runtime.pty.kill();
     this.panes.delete(paneId);
   }
@@ -504,5 +543,33 @@ export class WorkspaceManager {
 
   private findWorkspace(workspaceId: string): Workspace | undefined {
     return this.state.workspaces.find((workspace) => workspace.id === workspaceId);
+  }
+
+  private buildAssetFileName(fileName: string, mimeType: string): string {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const parsed = path.parse(fileName || 'attachment');
+    const safeName = (parsed.name || 'attachment').replace(/[^a-zA-Z0-9-_]+/g, '-').replace(/-+/g, '-').slice(0, 48) || 'attachment';
+    const extension = parsed.ext || this.extensionFromMimeType(mimeType);
+    return `${timestamp}-${safeName}${extension}`;
+  }
+
+  private extensionFromMimeType(mimeType: string): string {
+    const normalized = mimeType.toLowerCase();
+    if (normalized === 'image/png') {
+      return '.png';
+    }
+    if (normalized === 'image/jpeg') {
+      return '.jpg';
+    }
+    if (normalized === 'image/webp') {
+      return '.webp';
+    }
+    if (normalized === 'image/gif') {
+      return '.gif';
+    }
+    if (normalized === 'text/plain') {
+      return '.txt';
+    }
+    return '';
   }
 }
