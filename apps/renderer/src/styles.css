@@ -78,9 +78,22 @@ select {
 
 .topbar__brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+.topbar__brand-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 18px rgba(77, 162, 255, 0.24));
 }
 
 .topbar__eyebrow {
@@ -612,6 +625,19 @@ select {
   gap: 16px;
   min-width: 0;
   padding: 20px;
+}
+
+.start-screen__hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.start-screen__logo {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 16px 28px rgba(77, 162, 255, 0.22));
 }
 
 .start-screen__eyebrow {

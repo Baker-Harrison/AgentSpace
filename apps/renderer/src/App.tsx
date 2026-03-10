@@ -5,6 +5,7 @@ import { useAgentSpacesStore } from './store/useAgentSpacesStore';
 import { WorkspaceTabs } from './components/WorkspaceTabs';
 import { TerminalPane } from './components/TerminalPane';
 import { NewWorkspaceDialog } from './components/NewWorkspaceDialog';
+import { AgentSpacesLogo } from './components/AgentSpacesLogo';
 
 function getLayoutDimensions(layoutId: string) {
   return LAYOUT_PRESETS.find((layout) => layout.id === layoutId) ?? LAYOUT_PRESETS[0];
@@ -207,8 +208,11 @@ export default function App() {
       <div className="app-frame">
         <header className="topbar">
           <div className="topbar__brand">
-            <div className="topbar__eyebrow">AgentSpaces</div>
-            <div className="topbar__title">Terminal workspace</div>
+            <AgentSpacesLogo className="brand-logo" />
+            <div className="topbar__brand-copy">
+              <div className="topbar__eyebrow">AgentSpaces</div>
+              <div className="topbar__title">Terminal workspace</div>
+            </div>
           </div>
           <div className="topbar__controls">
             <button className="chrome-button" onClick={openCreateWorkspaceDialog} type="button">
@@ -325,7 +329,10 @@ export default function App() {
         ) : (
           <section className="start-screen">
             <div className="start-screen__hero">
-              <div className="start-screen__eyebrow">AgentSpaces</div>
+              <div className="start-screen__hero-brand">
+                <AgentSpacesLogo className="start-screen__logo" />
+                <div className="start-screen__eyebrow">AgentSpaces</div>
+              </div>
               <h1 className="start-screen__title">Launch a terminal workspace built for parallel coding agents.</h1>
               <p className="start-screen__copy">
                 Start with a folder, choose the grid, and decide how many Codex, Claude, or shell panes should boot automatically.
